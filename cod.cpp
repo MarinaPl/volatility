@@ -5,16 +5,22 @@
 #include <iomanip> 
 #include <vector>
 #include <cstdlib>
+#include <bitset> 
+#include <climits> 
+#include <cmath> 
+
 
 using namespace std;
-int N;
+int N,N1;
 float m, q, sigma_l, sigma_h;
-vector<int> ans;
+vector < vector<int> > p;//матрица переходных вероятностей probability
+vector < vector<int> >  koef; //-+1
+vector<int> vol;//волатильность  - все возможные сигмы
+
 
 void fill(int n) {
 	int k1 = pow(2, n);  //2^N
 	ofstream file2("output.txt");
-
 	
 	for (int i = 0; i < k1; i++) {
 		int j = i;
@@ -28,34 +34,72 @@ void fill(int n) {
 		}
 		file2 << setw(N - k3);
 		file2 << j << endl;
-		//file2 << k3<< endl;
-		
-		
+		//file2 << k3<< endl;		
 	}
+	file2.close();
+
+	//до этого момента работает
+
+ifstream file3;
+file3.open("output.txt");
+ofstream file4("fuck.txt");  //для проверки - его потом дропнуть
+//заполняем матрицу +-1
+	for (int i = 0; i < k1; i++) {
+		//разделение на две части - чтобы убрать косяк с нулем
+		if (i < pow(2, n - 1)) {
+			for (int j = 0; j < n; j++) {
+				char s1;
+				file3 >> s1;
+				if (s1 == '1')
+					koef[i][j] = 1;
+					//file4 << 1;
+				if (s1 == '0')
+					koef[i][j] = -1;
+					//file4 << -1;
+				file4 << koef[i][j];
+			}
+		}
+		else {
+			for (int j = 0; j < n; j++) {
+				char s1;
+				file3 >> s1;
+				if (s1 == '1')
+					koef[i][j] = 1;
+					//file4 << 1;
+				if (s1 == '0')
+					koef[i][j] = -1;
+					//file4 << -1;
+				file4 << koef[i][j];
+			}
+			file3.ignore();
+			
+		}
+		//file3 >> endl;
+		file4 << endl;
+	}
+
+	file3.close();
+	
 }
 
 
-	/*
-	void fill(int n, string s) {
-	if (n == 0) {
-		file2 << s << endl;
-	}
-	else {
-		fill(n - 1, s + "0");
-		fill(n - 1, s + "1");
-	}*/
-
-//	file2.close();
-
 
 int main() {
-	fstream file;
+	ifstream file;
 	file.open("input.txt");
 	file >> N;
 	file.close();
-	fill(N);
+
+	//выделение памяти под векторы
+	p = vector < vector<int> >(N, vector<int>(N, 0));
+    koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0)); //сама матрица - выделение памяти
+	vol = vector<int>(N);
+
+	fill(N); 
+	//
+
 	return 0;
-	//заполнили промежуточный файл всеми комбинациями, теперь нужно из него вытащить каждый 0 и 1 в коэфф.
+	
 }
 
 
