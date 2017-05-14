@@ -5,22 +5,35 @@
 #include <iomanip> 
 #include <vector>
 #include <cstdlib>
-#include <bitset> 
 #include <climits> 
 #include <cmath> 
 
-
 using namespace std;
 int N,N1;
-float m, q, sigma_l, sigma_h;
-vector < vector<int> > p;//матрица переходных вероятностей probability
+float m,S, K, q, sigma_l, sigma_h;
+vector < vector<float> > p;//матрица переходных вероятностей probability
 vector < vector<int> >  koef; //-+1
-vector<int> vol;//волатильность  - все возможные сигмы
+vector<float> vol;//волатильность  - все возможные сигмы
 
+void read_task() {
+	ifstream file;
+	file.open("input.txt");
+	file >> N >> m >> S >> K >> sigma_l >> sigma_h;
+	//выделение памяти под векторы и матрицы
+	p = vector < vector<float> >(N, vector<float>(N, 0));
+	koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0));
+	vol = vector<float>(N);
+	//чтение матрицы переходных вероятностей
+	for (int i = 0; i < N; i++)
+		for (int j = 0; j < N; j++) {
+			file >> p[i][j];
+		}
+	file.close();
+}
 
-void fill(int n) {
+void fill_koef(int n) {
 	int k1 = pow(2, n);  //2^N
-	ofstream file2("output.txt");
+	ofstream file2("output1.txt");
 	
 	for (int i = 0; i < k1; i++) {
 		int j = i;
@@ -34,15 +47,11 @@ void fill(int n) {
 		}
 		file2 << setw(N - k3);
 		file2 << j << endl;
-		//file2 << k3<< endl;		
 	}
 	file2.close();
 
-	//до этого момента работает
-
 ifstream file3;
-file3.open("output.txt");
-ofstream file4("fuck.txt");  //для проверки - его потом дропнуть
+file3.open("output1.txt");
 //заполняем матрицу +-1
 	for (int i = 0; i < k1; i++) {
 		//разделение на две части - чтобы убрать косяк с нулем
@@ -52,11 +61,8 @@ ofstream file4("fuck.txt");  //для проверки - его потом дропнуть
 				file3 >> s1;
 				if (s1 == '1')
 					koef[i][j] = 1;
-					//file4 << 1;
 				if (s1 == '0')
 					koef[i][j] = -1;
-					//file4 << -1;
-				file4 << koef[i][j];
 			}
 		}
 		else {
@@ -65,41 +71,46 @@ ofstream file4("fuck.txt");  //для проверки - его потом дропнуть
 				file3 >> s1;
 				if (s1 == '1')
 					koef[i][j] = 1;
-					//file4 << 1;
 				if (s1 == '0')
 					koef[i][j] = -1;
-					//file4 << -1;
-				file4 << koef[i][j];
 			}
-			file3.ignore();
-			
+			file3.ignore();		
 		}
-		//file3 >> endl;
-		file4 << endl;
 	}
-
-	file3.close();
-	
+	file3.close();	
 }
+//вектор волатильностей
+void fill_vol(float s1, float s2) {
+	float h = (s2 - s1) / (N - 1);
+	vol[0] = s1;
+	for (int i = 1; i < N;  i++) {
+		vol[i] = vol[i - 1] + i*h;
+	}
+}
+//функция нахождения максимума - чтобы проще было жить
+float f(float x) {
+	double res = x - K;
+	res = max(res, 0.0);
+	return res;
+}
+//расчет мат.ожидания
+/*
+void calculation (vector <float> vol){
+	float m1 = m + 1;
+	float n = 1 / (pow(2, N));
+	float Expectancy = ;
 
+}
+*/
 
 
 int main() {
-	ifstream file;
-	file.open("input.txt");
-	file >> N;
-	file.close();
-
-	//выделение памяти под векторы
-	p = vector < vector<int> >(N, vector<int>(N, 0));
-    koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0)); //сама матрица - выделение памяти
-	vol = vector<int>(N);
-
-	fill(N); 
-	//
+	read_task();//считали все что могли из файла
+	fill_koef(N); //матрица
+	fill_vol(sigma_l, sigma_h); //вектор волатильностей
+	calculation(vol); //собственно вычисления + запись результата в файл
 
 	return 0;
-	
 }
 
 
