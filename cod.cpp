@@ -9,11 +9,12 @@
 #include <cmath> 
 
 using namespace std;
-int N,N1;
+int N;
 float m,S, K, q, sigma_l, sigma_h;
 vector < vector<float> > p;//матрица переходных вероятностей probability
 vector < vector<int> >  koef; //-+1
 vector<float> vol;//волатильность  - все возможные сигмы
+vector <float> help; //чтобы облегчить себе жизнь при подсчете матожидания
 
 void read_task() {
 	ifstream file;
@@ -94,22 +95,37 @@ float f(float x) {
 	return res;
 }
 //расчет мат.ожидания
-/*
 void calculation (vector <float> vol){
+	int N1 = pow(2, N);
 	float m1 = m + 1;
-	float n = 1 / (pow(2, N));
-	float Expectancy = ;
+	float st = 1.0 / N1;
 
+	ofstream f2("output2.txt");
+	help = vector<float>(N1, 1);
+
+	for (int i = 0; i < N1; i++) {
+		float current;
+		for (int j = 0; j < N; j++) {
+			current = (m1 + vol[j] * koef[i][j]);
+			help[i] *= S * current; 
+		}
+	}
+	float sum = 0;
+	for (int i = 0; i < N1; i++) {
+		help[i] = f(help[i]);
+		sum += help[i];
+		f2 << help[i] << ' ' ;
+	}
+	f2 <<  endl << sum << endl << st;
+	float Expectancy = st * sum;
+	f2 << endl << Expectancy;
 }
-*/
-
 
 int main() {
 	read_task();//считали все что могли из файла
 	fill_koef(N); //матрица
 	fill_vol(sigma_l, sigma_h); //вектор волатильностей
 	calculation(vol); //собственно вычисления + запись результата в файл
-
 	return 0;
 }
 
