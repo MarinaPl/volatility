@@ -13,9 +13,15 @@ int N;
 float m,S, K, q, sigma_l, sigma_h;
 vector < vector<float> > p;//матрица переходных вероятностей probability
 vector < vector<int> >  koef; //-+1
-vector<int> ind;  //вспомогательный для всех возможных волатильностей
+//vector<int> ind;  //вспомогательный для всех возможных волатильностей
 vector<float> vol;//волатильность  - все возможные сигмы
 vector <float> help; //чтобы облегчить себе жизнь при подсчете матожидания
+
+//вспомогательные данные для перебора всех возможных векторов волатильности
+int h;
+vector<int> ind(100000);
+vector<int> ind_ept(100000);
+
 
 void read_task() {
 	ifstream file;
@@ -24,7 +30,7 @@ void read_task() {
 	//выделение памяти под векторы и матрицы
 	p = vector < vector<float> >(N, vector<float>(N, 0));
 	koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0));
-	ind = vector<int>(N);
+	ind = vector<int>(100000);
 	vol = vector<float>(N);
 	//чтение матрицы переходных вероятностей
 	for (int i = 0; i < N; i++)
@@ -91,20 +97,39 @@ void fill_vol(float s1, float s2) {
 	}
 }
 //перебираем все векторы волатильностей - шаманство, тут именно индексы   - 	comb(N, 0); - вызов
-void comb(int n, int t){
-	ofstream f2("fuck.txt");
+ofstream file("output111.txt"); //вспомогательный файл - нужен, чтобы потом из него считывать индексы... тут от 1 до N,  запомнить - чтобы вычитать 1!!!!!!
 
-	if (t == n){
-		for (int i = 0; i < n; i++)
-			f2 << ind[i] << " ";
-		f2 << endl;
+void comb(int n, int t) {
+	if (t == n) {
+		for (int i = 0; i < n; i++) {
+			ind_ept[h] = ind[i]; ++h;
+			file << ind[i] << " ";
+		}
+		file << endl;
 		return;
 	}
-	for (int i = 1; i <= n; i++){
+	for (int i = 1; i <= n; i++) {
 		ind[t] = i;
 		comb(n, t + 1);
 	}
 }
+
+void comb_true() {
+	comb(N, 0);
+	int c = 0;
+	for (int i = 0; i < h; ++i) {
+		if (c < N)
+		{
+			 ++c;
+		}
+		else {
+			c = 1;
+		}
+	}	
+	file.close();
+}
+
+
 //функция нахождения максимума - чтобы проще было жить
 float f(float x) {
 	double res = x - K;
@@ -143,7 +168,8 @@ int main() {
 	fill_koef(N); //матрица
 	fill_vol(sigma_l, sigma_h); //вектор волатильностей
 	calculation(vol); //собственно вычисления + запись результата в файл
-	comb(N, 0);
+	comb_true();
+
 	system("pause");
 	return 0;
 }
