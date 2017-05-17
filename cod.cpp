@@ -13,10 +13,12 @@ int N;
 float m,S, K, q, sigma_l, sigma_h;
 vector < vector<float> > p;//матрица переходных вероятностей probability
 vector < vector<int> >  koef; //-+1
-//vector<int> ind;  //вспомогательный для всех возможных волатильностей
 vector<float> vol;//волатильность  - все возможные сигмы
 vector <float> help; //чтобы облегчить себе жизнь при подсчете матожидания
-
+vector<float> A; //вектор коэффициентов, которые сравниваем в конце
+vector<float> Expectancy;
+vector < vector<float> > expec;//для удобства 
+vector<float> sum_vec;
 //вспомогательные данные для перебора всех возможных векторов волатильности
 int h;
 vector<int> ind;
@@ -33,10 +35,14 @@ void read_task() {
 	//выделение памяти под векторы и матрицы
 	p = vector < vector<float> >(N, vector<float>(N, 0));
 	koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0));
+	A = vector <float>(N);
+	Expectancy = vector <float>(pow(N, N));
 	ind = vector<int>(100000);
 	ind_true = vector<int>(100000);
 	vol = vector<float>(N);
 	vol_help = vector<float>(N);
+	sum_vec = vector <float>(N);
+
 	//чтение матрицы переходных вероятностей
 	for (int i = 0; i < N; i++)
 		for (int j = 0; j < N; j++) {
@@ -138,67 +144,83 @@ float f(float x) {
 	return res;
 }
 
+
+//перебираем все векторы волатильности и тут же расчет мат.ожидания и определяем наши коэф-ты А[i]
 ofstream f2("output2.txt");
-//расчет мат.ожидания
-void calculation (vector <float> v){
+
+void calculation(vector <float> v) {
+	int NN = pow(N, N);
+	int s;
 	int N1 = pow(2, N);
 	float m1 = m + 1;
 	float st = 1.0 / N1;
-
-	help = vector<float>(N1, 1);
-
-	for (int i = 0; i < N1; i++) {
-		float current;
-		for (int j = 0; j < N; j++) {
-			current = (m1 + v[j] * koef[i][j]);
-			help[i] *= S * current; 
-		}
-	}
-	float sum = 0;
-	for (int i = 0; i < N1; i++) {
-		help[i] = f(help[i]);
-		sum += help[i];
-		f2 << help[i] << ' ' ;
-	}
-	f2 <<  endl << sum << endl;
-	float Expectancy = st * sum;
-	f2 << endl << Expectancy << endl << endl;
-}
-
-//перебираем все векторы волатильности и тут же 
-void find_vec(vector <float> volatility) {
-	int NN = pow(N, N);
-	int s;
+	help = vector<float>(N1);
+	expec = vector < vector<float> >(N, vector<float>(N));
+	
 	ifstream file_help;
 	ofstream  ff("fu.txt");
+	ofstream  file_out("output.txt");
 	file_help.open("output111.txt");
+
 	for (int i = 0; i < NN; i++) {
 		for (int j = 0; j < N; j++) {
 			file_help >> s;
-			vol_help[j] = volatility[s - 1];
+			vol_help[j] = v[s - 1];
 			ff << vol_help[j] << ' ';
 		}
 		ff << endl;
-		calculation(vol_help);
+		///построили вектор волатильности и теперь с ним работаем
+		help.assign(N1, 1);
+		for (int i1 = 0; i1 < N1; i1++) {
+			float current;
+			for (int j1 = 0; j1 < N; j1++) {
+				current = (m1 + vol_help[j1] * koef[i1][j1]);
+				help[i1] *= current;		
+			}
+		}
+		float sum = 0;
+		for (int i2 = 0; i2 < N1; i2++) {
+			help[i2] = f(S * help[i2]);
+			sum += help[i2];
+			f2 << help[i2] << ' ';
+		}
+		f2 << endl << sum << endl;
+		 Expectancy [i] = st * sum;
+
+		f2 << endl << Expectancy[i] << endl << endl;
 	}
+
+	//вычисление A[i] - разбиваем вектор Expectancy на вектора expec по N элементов и поэлементно умножаем на соотв.элементы матр.пер.вер
+	
+	/*
+	int t_koef = N1;
+	while (t_koef)
+	{
+		for (int t = N; t >= 0; t--) {
+			for (int t1 = N; t1 >= 0; t1--) {
+				expec[t1][t] = Expectancy[t_koef];
+				A[t] += expec[t1][t] * p[t1][t];
+				t_koef--;
+				//file_out << Expectancy[t_koef * t] << ' ' ;
+			}
+			//t_koef + N;
+			file_out << endl;
+			file_out << A[t] << endl;
+		}
+		
+	}*/
+
+
 	file_help.close();
 	ff.close();
 }
-
-
-
-
-
 
 int main() {
 	read_task();//считали все что могли из файла
 	fill_koef(N); //матрица
 	fill_vol(sigma_l, sigma_h); //вектор волатильностей
-
 	comb_true(); //все возможные векторы волатильностей пока что индексы
-
-	//calculation(vol); //собственно вычисления + запись результата в файл
-	find_vec(vol);
+	calculation(vol); //перебираем векторы + считаем h от всех вариантов (sigma_1.....sigma_n)
 
 	system("pause");
 	return 0;
