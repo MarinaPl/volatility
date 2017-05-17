@@ -19,25 +19,30 @@ vector <float> help; //чтобы облегчить себе жизнь при подсчете матожидания
 
 //вспомогательные данные для перебора всех возможных векторов волатильности
 int h;
-vector<int> ind(100000);
-vector<int> ind_ept(100000);
+vector<int> ind;
+vector<int> ind_true;
+
+vector<float> vol_help;
+
 
 
 void read_task() {
-	ifstream file;
-	file.open("input.txt");
-	file >> N >> m >> S >> K >> sigma_l >> sigma_h;
+	ifstream file_in;
+	file_in.open("input.txt");
+	file_in >> N >> m >> S >> K >> sigma_l >> sigma_h;
 	//выделение памяти под векторы и матрицы
 	p = vector < vector<float> >(N, vector<float>(N, 0));
 	koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0));
 	ind = vector<int>(100000);
+	ind_true = vector<int>(100000);
 	vol = vector<float>(N);
+	vol_help = vector<float>(N);
 	//чтение матрицы переходных вероятностей
 	for (int i = 0; i < N; i++)
 		for (int j = 0; j < N; j++) {
-			file >> p[i][j];
+			file_in >> p[i][j];
 		}
-	file.close();
+	file_in.close();
 }
 
 void fill_koef(int n) {
@@ -88,7 +93,8 @@ file3.open("output1.txt");
 	}
 	file3.close();	
 }
-//вектор волатильностей
+
+//вектор волатильностей (sigma_l...sigma_h)
 void fill_vol(float s1, float s2) {
 	float h = (s2 - s1) / (N - 1);
 	vol[0] = s1;
@@ -98,11 +104,10 @@ void fill_vol(float s1, float s2) {
 }
 //перебираем все векторы волатильностей - шаманство, тут именно индексы   - 	comb(N, 0); - вызов
 ofstream file("output111.txt"); //вспомогательный файл - нужен, чтобы потом из него считывать индексы... тут от 1 до N,  запомнить - чтобы вычитать 1!!!!!!
-
 void comb(int n, int t) {
 	if (t == n) {
 		for (int i = 0; i < n; i++) {
-			ind_ept[h] = ind[i]; ++h;
+			ind_true[h] = ind[i]; ++h;
 			file << ind[i] << " ";
 		}
 		file << endl;
@@ -119,16 +124,12 @@ void comb_true() {
 	int c = 0;
 	for (int i = 0; i < h; ++i) {
 		if (c < N)
-		{
 			 ++c;
-		}
-		else {
+		else 
 			c = 1;
-		}
 	}	
 	file.close();
 }
-
 
 //функция нахождения максимума - чтобы проще было жить
 float f(float x) {
@@ -136,19 +137,20 @@ float f(float x) {
 	res = max(res, 0.0);
 	return res;
 }
+
+ofstream f2("output2.txt");
 //расчет мат.ожидания
-void calculation (vector <float> vol){
+void calculation (vector <float> v){
 	int N1 = pow(2, N);
 	float m1 = m + 1;
 	float st = 1.0 / N1;
 
-	ofstream f2("output2.txt");
 	help = vector<float>(N1, 1);
 
 	for (int i = 0; i < N1; i++) {
 		float current;
 		for (int j = 0; j < N; j++) {
-			current = (m1 + vol[j] * koef[i][j]);
+			current = (m1 + v[j] * koef[i][j]);
 			help[i] *= S * current; 
 		}
 	}
@@ -158,17 +160,45 @@ void calculation (vector <float> vol){
 		sum += help[i];
 		f2 << help[i] << ' ' ;
 	}
-	f2 <<  endl << sum << endl << st;
+	f2 <<  endl << sum << endl;
 	float Expectancy = st * sum;
-	f2 << endl << Expectancy;
+	f2 << endl << Expectancy << endl << endl;
 }
+
+//перебираем все векторы волатильности и тут же 
+void find_vec(vector <float> volatility) {
+	int NN = pow(N, N);
+	int s;
+	ifstream file_help;
+	ofstream  ff("fu.txt");
+	file_help.open("output111.txt");
+	for (int i = 0; i < NN; i++) {
+		for (int j = 0; j < N; j++) {
+			file_help >> s;
+			vol_help[j] = volatility[s - 1];
+			ff << vol_help[j] << ' ';
+		}
+		ff << endl;
+		calculation(vol_help);
+	}
+	file_help.close();
+	ff.close();
+}
+
+
+
+
+
 
 int main() {
 	read_task();//считали все что могли из файла
 	fill_koef(N); //матрица
 	fill_vol(sigma_l, sigma_h); //вектор волатильностей
-	calculation(vol); //собственно вычисления + запись результата в файл
-	comb_true();
+
+	comb_true(); //все возможные векторы волатильностей пока что индексы
+
+	//calculation(vol); //собственно вычисления + запись результата в файл
+	find_vec(vol);
 
 	system("pause");
 	return 0;
