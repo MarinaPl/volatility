@@ -15,9 +15,10 @@ vector < vector<float> > p;//матрица переходных вероятностей probability
 vector < vector<int> >  koef; //-+1
 vector<float> vol;//волатильность  - все возможные сигмы
 vector <float> help; //чтобы облегчить себе жизнь при подсчете матожидания
+vector<int> p_s;
 vector<float> A; //вектор коэффициентов, которые сравниваем в конце
 vector<float> Expectancy;
-vector < vector<float> > expec;//для удобства 
+vector<float> A1;
 vector<float> sum_vec;
 //вспомогательные данные для перебора всех возможных векторов волатильности
 int h;
@@ -36,6 +37,7 @@ void read_task() {
 	p = vector < vector<float> >(N, vector<float>(N, 0));
 	koef = vector < vector<int> >(pow(2, N), vector<int>(N, 0));
 	A = vector <float>(N);
+	A1 = vector <float>(pow(N, N)); //ветор, состоящий из произведений переходных вероятностей - каждой цепочке будет соответствовать свой коэф-т
 	Expectancy = vector <float>(pow(N, N));
 	ind = vector<int>(100000);
 	ind_true = vector<int>(100000);
@@ -155,61 +157,71 @@ void calculation(vector <float> v) {
 	float m1 = m + 1;
 	float st = 1.0 / N1;
 	help = vector<float>(N1);
-	expec = vector < vector<float> >(N, vector<float>(N));
+	p_s = vector<int>(N);
 	
 	ifstream file_help;
 	ofstream  ff("fu.txt");
+	ofstream  fil("fuck.txt");
 	ofstream  file_out("output.txt");
 	file_help.open("output111.txt");
-
+	A1.assign(pow(N, N), 1);
+	
 	for (int i = 0; i < NN; i++) {
+
 		for (int j = 0; j < N; j++) {
 			file_help >> s;
 			vol_help[j] = v[s - 1];
 			ff << vol_help[j] << ' ';
+			p_s[j] = s - 1;
+
 		}
 		ff << endl;
-		///построили вектор волатильности и теперь с ним работаем
+		//отдельно считаем коэф=ты так как знаем в каком порядке рассматриваются наши вектоы!!!!  
+		//не работает идея для 3
+
+		for (int t = 1; t < N; t++) {
+			A1[i] = p[p_s[t]][p_s[t - 1]];
+		}
+
+		//построили вектор волатильности и теперь с ним работаем
 		help.assign(N1, 1);
 		for (int i1 = 0; i1 < N1; i1++) {
 			float current;
 			for (int j1 = 0; j1 < N; j1++) {
 				current = (m1 + vol_help[j1] * koef[i1][j1]);
-				help[i1] *= current;		
-			}
+				help[i1] *= current;
+			}	
 		}
+
 		float sum = 0;
 		for (int i2 = 0; i2 < N1; i2++) {
-			help[i2] = f(S * help[i2]);
+			help[i2] = f(S * help[i2]); //находим максимум "поэлеметно"
 			sum += help[i2];
 			f2 << help[i2] << ' ';
 		}
-		f2 << endl << sum << endl;
-		 Expectancy [i] = st * sum;
 
+		f2 << endl << sum << endl;
+		Expectancy[i] = st * sum;
 		f2 << endl << Expectancy[i] << endl << endl;
 	}
 
-	//вычисление A[i] - разбиваем вектор Expectancy на вектора expec по N элементов и поэлементно умножаем на соотв.элементы матр.пер.вер
-	
-	/*
-	int t_koef = N1;
-	while (t_koef)
-	{
-		for (int t = N; t >= 0; t--) {
-			for (int t1 = N; t1 >= 0; t1--) {
-				expec[t1][t] = Expectancy[t_koef];
-				A[t] += expec[t1][t] * p[t1][t];
-				t_koef--;
-				//file_out << Expectancy[t_koef * t] << ' ' ;
-			}
-			//t_koef + N;
-			file_out << endl;
-			file_out << A[t] << endl;
-		}
-		
-	}*/
+	//печать для проверки
+	for (int k =0; k < pow(N,N);k++)
+		fil << A1[k] <<' ';
+	fil << endl;
+	for (int k = 0; k < pow(N, N); k++)
+		fil << Expectancy[k] << ' ';
+	fil << endl;
+	for (int k = 0; k < pow(N, N); k++)
+		fil << A1[k] * Expectancy[k] << ' ';
+	fil << endl;
 
+	for (int k2 = 0; k2 < N; k2++) {
+		for (int k3 = 0; k3 < N; k3++) {
+		
+		
+		}
+	}
 
 	file_help.close();
 	ff.close();
