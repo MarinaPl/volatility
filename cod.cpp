@@ -176,11 +176,10 @@ void calculation(vector <float> v) {
 
 		}
 		ff << endl;
-		//отдельно считаем коэф=ты так как знаем в каком порядке рассматриваются наши вектоы!!!!  
-		//не работает идея для 3
+		//отдельно считаем коэф=ты так как знаем в каком порядке рассматриваются наши векторы!!!!  
 
 		for (int t = 1; t < N; t++) {
-			A1[i] = p[p_s[t]][p_s[t - 1]];
+			A1[i] *= p[p_s[t]][p_s[t - 1]];
 		}
 
 		//построили вектор волатильности и теперь с ним работаем
@@ -218,10 +217,29 @@ void calculation(vector <float> v) {
 
 	for (int k2 = 0; k2 < N; k2++) {
 		for (int k3 = 0; k3 < N; k3++) {
-		
-		
 		}
 	}
+
+	//осталось вывести сам вектор А и найти в нем минимум и максимум - используем файл ибо проще
+	ofstream  ff_help("f_h.txt");
+	int k_h = 0;
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N1 + 1; j++) {
+			A[i] += A1[j + k_h] * Expectancy[j + k_h];
+		}
+		k_h += pow(N,2);
+		ff_help << endl << k_h << endl;
+		ff_help << A[i] << endl;
+	}
+
+
+	float max_A = *max_element(A.begin(), A.end());
+	float min_A = *min_element(A.begin(), A.end());
+	//подумать над итератором, чтобы вернуть номер мин и мах элемента
+
+	file_out << 'max ' << ' ' << max_A << endl;
+	file_out << 'min ' << ' ' << min_A << endl;
+
 
 	file_help.close();
 	ff.close();
