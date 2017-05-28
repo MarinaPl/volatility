@@ -18,7 +18,7 @@ vector <float> help; //чтобы облегчить себе жизнь при подсчете матожидания
 vector<int> p_s;
 vector<float> A; //вектор коэффициентов, которые сравниваем в конце
 vector<float> Expectancy;
-vector<float> A1;
+vector<float> A1; //вспомогательный вектор для расчета A[i]
 vector<float> sum_vec;
 //вспомогательные данные для перебора всех возможных векторов волатильности
 int h;
@@ -26,7 +26,6 @@ vector<int> ind;
 vector<int> ind_true;
 
 vector<float> vol_help;
-
 
 
 void read_task() {
@@ -55,7 +54,7 @@ void read_task() {
 
 void fill_koef(int n) {
 	int k1 = pow(2, n);  //2^N
-	ofstream file2("output1.txt");
+	ofstream file2("output1.txt");  //удалять нельзя - колдунство с 1 и -1
 	
 	for (int i = 0; i < k1; i++) {
 		int j = i;
@@ -107,7 +106,7 @@ void fill_vol(float s1, float s2) {
 	float h = (s2 - s1) / (N - 1);
 	vol[0] = s1;
 	for (int i = 1; i < N;  i++) {
-		vol[i] = vol[i - 1] + i*h;
+		vol[i] = vol[i - 1] + h;
 	}
 }
 //перебираем все векторы волатильностей - шаманство, тут именно индексы   - 	comb(N, 0); - вызов
@@ -152,6 +151,7 @@ ofstream f2("output2.txt");
 
 void calculation(vector <float> v) {
 	int NN = pow(N, N);
+	int N_1 = pow(N, N - 1);
 	int s;
 	int N1 = pow(2, N);
 	float m1 = m + 1;
@@ -161,7 +161,7 @@ void calculation(vector <float> v) {
 	
 	ifstream file_help;
 	ofstream  ff("fu.txt");
-	ofstream  fil("fuck.txt");
+	ofstream  fil("control.txt");
 	ofstream  file_out("output.txt");
 	file_help.open("output111.txt");
 	A1.assign(pow(N, N), 1);
@@ -215,21 +215,16 @@ void calculation(vector <float> v) {
 		fil << A1[k] * Expectancy[k] << ' ';
 	fil << endl;
 
-	for (int k2 = 0; k2 < N; k2++) {
-		for (int k3 = 0; k3 < N; k3++) {
-		}
-	}
-
 	//осталось вывести сам вектор А и найти в нем минимум и максимум - используем файл ибо проще
 	ofstream  ff_help("f_h.txt");
+
 	int k_h = 0;
 	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < N1 + 1; j++) {
+		for (int j = 0; j < N_1; j++) {
 			A[i] += A1[j + k_h] * Expectancy[j + k_h];
 		}
-		k_h += pow(N,2);
-		ff_help << endl << k_h << endl;
-		ff_help << A[i] << endl;
+		k_h += N_1;
+		ff_help << A[i] << ' ';
 	}
 
 
@@ -237,12 +232,30 @@ void calculation(vector <float> v) {
 	float min_A = *min_element(A.begin(), A.end());
 	//подумать над итератором, чтобы вернуть номер мин и мах элемента
 
-	file_out << 'max ' << ' ' << max_A << endl;
-	file_out << 'min ' << ' ' << min_A << endl;
+	auto it_max = max_element(A.begin(), A.end());
+	auto it_min = min_element(A.begin(), A.end());
 
+	file_out << "max" << ' ' << max_A << endl;
+	int it_i = 0;
+	for (auto it = A.begin(); it < A.end(); it++) {
+		if (it == it_max) file_out << it_i << endl;
+		it_i++;
+	}
 
-	file_help.close();
-	ff.close();
+	file_out << "min" << ' ' << min_A << endl;
+    it_i = 0;
+	for (auto it = A.begin(); it < A.end(); it++) {
+		if (it == it_min) file_out << it_i << endl;
+		it_i++;
+	}
+	
+	file_help.close(); //нужен, удалять нельзя - "кодовый замок outut111" 
+	ff.close();  //можно удалять fu смотрим на все возможные векторы вол.
+	fil.close(); //control можно удалить, но красивенько смотрим что вообще происходит
+	file_out.close(); // ВЫВОД
+	ff_help.close(); //можно удалять - только для печати A[i] -- "f_h"
+	f2.close(); //тоже можно удалить - для красоты и контроля output2
+
 }
 
 int main() {
@@ -255,7 +268,3 @@ int main() {
 	system("pause");
 	return 0;
 }
-
-
-
- 
